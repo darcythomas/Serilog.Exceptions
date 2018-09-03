@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using Serilog.Exceptions.Core;
+using Serilog.Exceptions.Destructurers;
+
+namespace DataInsight.Web.Utility.Logging
+{
+
+    public class DbEntityValidationExceptionDestructurer : ExceptionDestructurer
+    {
+        /// <inheritdoc cref="IExceptionDestructurer.TargetTypes"/>
+        public override Type[] TargetTypes => new[]
+        {
+                typeof(System.Data.Entity.Validation.DbEntityValidationException),
+            };
+
+        /// <inheritdoc cref="IExceptionDestructurer.Destructure"/>
+        public override void Destructure(
+            Exception exception,
+            IExceptionPropertiesBag propertiesBag,
+            Func<Exception, IReadOnlyDictionary<string, object>> destructureException)
+        {
+            base.Destructure(exception, propertiesBag, destructureException);
+
+            var validationException = (System.Data.Entity.Validation.DbEntityValidationException)exception;
+
+            foreach (var error in validationException.EntityValidationErrors)
+            {
+                foreach (var ve in error.ValidationErrors)
+                {
+                    propertiesBag.AddProperty(ve.PropertyName, ve.ErrorMessage);
+                }
+            }
+        }
+    }
+}
