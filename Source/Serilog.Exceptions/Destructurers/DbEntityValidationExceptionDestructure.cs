@@ -2,17 +2,14 @@ using System;
 using System.Collections.Generic;
 using Serilog.Exceptions.Core;
 using Serilog.Exceptions.Destructurers;
+using System.Data.Entity.Validation;
 
 namespace DataInsight.Web.Utility.Logging
 {
-
     public class DbEntityValidationExceptionDestructurer : ExceptionDestructurer
     {
         /// <inheritdoc cref="IExceptionDestructurer.TargetTypes"/>
-        public override Type[] TargetTypes => new[]
-        {
-                typeof(System.Data.Entity.Validation.DbEntityValidationException),
-            };
+        public override Type[] TargetTypes => new[] { typeof(System.Data.Entity.Validation.DbEntityValidationException) };
 
         /// <inheritdoc cref="IExceptionDestructurer.Destructure"/>
         public override void Destructure(
@@ -22,7 +19,8 @@ namespace DataInsight.Web.Utility.Logging
         {
             base.Destructure(exception, propertiesBag, destructureException);
 
-            var validationException = (System.Data.Entity.Validation.DbEntityValidationException)exception;
+            DbEntityValidationException validationException = exception as DbEntityValidationException;
+            if (validationException is null) { return; }
 
             foreach (var error in validationException.EntityValidationErrors)
             {
